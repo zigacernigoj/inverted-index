@@ -5,27 +5,7 @@
 import os
 from os.path import isfile
 from bs4 import BeautifulSoup
-
-
-# returns only a text from HTML document
-def get_text(filepath):
-    if not isfile(filepath):
-        return None
-
-    # print(filepath)
-    f = open(filepath, "r", encoding='utf-8', errors='ignore')
-    content = f.read()
-    f.close()
-
-    parsed = BeautifulSoup(content, 'html.parser')
-    for s in parsed("script"):
-        s.decompose()
-    for s in parsed("noscript"):
-        s.decompose()
-    for s in parsed("style"):
-        s.decompose()
-
-    return parsed.text
+import nltk
 
 
 # returns a list of all filepaths
@@ -39,13 +19,50 @@ def get_filepaths():
     return filepath_list
 
 
+# returns only a text from HTML document
+# RETURNS BASE TEXT FOR ALL FURTHER WORK
+def get_text(filepath):
+    if not isfile(filepath):
+        return None
+
+    # print(filepath)
+    f = open(filepath, "r", encoding='utf-8', errors='ignore')
+    content = f.read()
+    f.close()
+
+    parsed = BeautifulSoup(content, 'html.parser')
+
+    # additional steps
+    # TODO: describe in report
+    for s in parsed("script"):
+        s.decompose()
+    for s in parsed("noscript"):
+        s.decompose()
+    for s in parsed("style"):
+        s.decompose()
+
+    return parsed.text
+
+
+# returns tokens from base text
+def get_processed_text(text):
+    text = text.lower()
+
+    # TODO: remove stopwords
+
+    tokens = nltk.word_tokenize(text)
+
+    return tokens
+
+
 # just a demo, how to call functions above
 def main():
 
     paths = get_filepaths()
 
     for p in paths:
-        text = get_text(p)
+        text = get_text(p)  # THIS IS BASE TEXT FOR ALL FURTHER WORK
+        tokens = get_processed_text(text)
 
     pass
 

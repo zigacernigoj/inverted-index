@@ -21,4 +21,5 @@ Note that you must then install needed libraries with `pipenv` not `pip`.
 #### Libraries
 
 - BeautifulSoup4: run `pip install bs4`
+- NLTK: run `pip install nltk`
 
