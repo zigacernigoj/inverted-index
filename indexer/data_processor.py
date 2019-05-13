@@ -12,7 +12,7 @@ def get_text(filepath):
     if not isfile(filepath):
         return None
 
-    print(filepath)
+    # print(filepath)
     f = open(filepath, "r", encoding='utf-8', errors='ignore')
     content = f.read()
     f.close()
@@ -45,7 +45,7 @@ def main():
     paths = get_filepaths()
 
     for p in paths:
-        get_text(p)
+        text = get_text(p)
 
     pass
 
