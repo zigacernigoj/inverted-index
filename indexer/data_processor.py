@@ -5,6 +5,8 @@
 import os
 from os.path import isfile
 from bs4 import BeautifulSoup
+import re
+import string
 
 import nltk
 nltk.download('stopwords')
@@ -108,7 +110,8 @@ def get_text(filepath):
     content = f.read()
     f.close()
 
-    parsed = BeautifulSoup(content, 'html.parser')
+    # parse, prettify, parse again ... because of *** GOV code
+    parsed = BeautifulSoup(BeautifulSoup(content, 'html.parser').prettify(), 'html.parser')
 
     # additional steps
     # TODO: describe in report
@@ -123,7 +126,7 @@ def get_text(filepath):
 
 
 # returns tokens from base text
-def get_processed_text(text, slovene_stopwords):
+def get_tokens(text, slovene_stopwords):
     # put all into lower case
     text = text.lower()
 
@@ -131,9 +134,29 @@ def get_processed_text(text, slovene_stopwords):
     tokens = nltk.word_tokenize(text)
 
     # remove stopwords
-    tokens = [word for word in tokens if word not in slovene_stopwords]
+    tokens = [word for word in tokens if word not in slovene_stopwords and word not in string.punctuation]
 
     return tokens
+
+
+def get_postings(tokens, original_text):
+    unique_tokens = set(tokens)
+
+    postings_for_doc = {}
+
+    for word in unique_tokens:
+        try:
+            postings_for_word = [m.start() for m in re.finditer(re.escape(word), original_text, flags=re.IGNORECASE)]
+            occurrences = len(postings_for_word)
+
+            # if occurrences > 0:  # dodaj ce bo nujno
+            postings_for_doc[word] = {"frequency": occurrences, "indexes": postings_for_word}
+
+        except Exception:
+            print("word", word)
+            raise Exception
+
+    return postings_for_doc
 
 
 # just a demo, how to call functions above
@@ -144,12 +167,41 @@ def main():
     # get stopwords only once
     slovene_stopwords = get_stopwords()
 
-    for p in paths:
-        # get base text from which the results for queries will me retrieved
-        text = get_text(p)  # THIS IS BASE TEXT FOR ALL FURTHER WORK
+    for filePath in paths:
 
-        # get tokens - separated words
-        tokens = get_processed_text(text, slovene_stopwords)
+        try:
+            # get base text from which the results for queries will me retrieved
+            original_text_for_doc = get_text(filePath)  # THIS IS BASE TEXT FOR ALL FURTHER WORK
+
+            # get tokens - separated words
+            tokens_for_doc = get_tokens(original_text_for_doc, slovene_stopwords)
+
+            postings_for_doc = get_postings(tokens_for_doc, original_text_for_doc)
+
+            # IMPORTANT VARIABLES:
+            # original_text_for_doc - preprocessed text from html file (no code!!!)
+            # postings_for_doc - postings to be added to DB
+
+            # postings_for_doc IS A DICTIONARY
+            # EXAMPLE ELEMENT: 'word': {'frequency': 1, 'indexes': [0]},
+            # keys are (unique) WORDS in a doc
+            # values are {'frequency': 1NUMBER, 'indexes': [array of indexes]},
+
+            # ADD TO DB
+            # add to DB table Word:
+            # KEY from postings_for_doc
+
+            # add to DB table Posting
+            #   word (KEY from postings_for_doc),
+            #   documentName (filePath),
+            #   frequency (from postings_for_doc),
+            #   indexes (from postings_for_doc -> TRANSFORM TO STRING!!!)
+
+        except Exception:
+            print("DOC:", filePath)
+
+    # tt = get_text("./PA3-data\e-prostor.gov.si\e-prostor.gov.si.125.html")
+    # print(tt)
 
     pass
 
