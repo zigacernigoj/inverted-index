@@ -101,28 +101,36 @@ def get_filepaths():
 
 # returns only a text from HTML document
 # RETURNS BASE TEXT FOR ALL FURTHER WORK
-def get_text(filepath):
-    if not isfile(filepath):
-        return None
+def get_text(file_or_string):
 
-    # print(filepath)
-    f = open(filepath, "r", encoding='utf-8', errors='ignore')
-    content = f.read()
-    f.close()
 
-    # parse, prettify, parse again ... because of *** GOV code
-    parsed = BeautifulSoup(BeautifulSoup(content, 'html.parser').prettify(), 'html.parser')
+    if isfile(file_or_string):
 
-    # additional steps
-    # TODO: describe in report
-    for s in parsed("script"):
-        s.decompose()
-    for s in parsed("noscript"):
-        s.decompose()
-    for s in parsed("style"):
-        s.decompose()
+        # print(filepath)
+        f = open(file_or_string, "r", encoding='utf-8', errors='ignore')
+        content = f.read()
+        f.close()
 
-    return parsed.text
+        # parse, prettify, parse again ... because of *** GOV code
+        parsed = BeautifulSoup(BeautifulSoup(content, 'html.parser').prettify(), 'html.parser')
+
+        # additional steps
+        # TODO: describe in report
+        for s in parsed("script"):
+            s.decompose()
+        for s in parsed("noscript"):
+            s.decompose()
+        for s in parsed("style"):
+            s.decompose()
+
+        return parsed.text
+
+    elif type(file_or_string) is str:
+        return file_or_string
+
+    else:
+        print("something wrong with input")
+        raise Exception
 
 
 # returns tokens from base text
@@ -146,11 +154,11 @@ def get_postings(tokens, original_text):
 
     for word in unique_tokens:
         try:
-            postings_for_word = [m.start() for m in re.finditer(re.escape(word), original_text, flags=re.IGNORECASE)]
-            occurrences = len(postings_for_word)
+            indexes_of_occurrences = [m.start() for m in re.finditer(re.escape(word), original_text, flags=re.IGNORECASE)]
+            occurrences = len(indexes_of_occurrences)
 
             # if occurrences > 0:  # dodaj ce bo nujno
-            postings_for_doc[word] = {"frequency": occurrences, "indexes": postings_for_word}
+            postings_for_doc[word] = {"frequency": occurrences, "indexes": indexes_of_occurrences}
 
         except Exception:
             print("word", word)
