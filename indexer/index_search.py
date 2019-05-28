@@ -5,7 +5,7 @@ import time
 
 import nltk
 
-from indexer.data_processor import get_stopwords, get_text
+from indexer.data_processor import get_text
 from indexer.sqlite import create_connection, close_connection, select_sql
 
 query1 = "predelovalne dejavnosti"
@@ -20,7 +20,7 @@ def main():
     conn = create_connection('../inverted-index.db')
 
     # process the query
-    text_for_query = get_text(query1)
+    text_for_query = get_text(query3)
     # print("q1 text", text_for_query)
 
     tokens_for_query = nltk.word_tokenize(text_for_query)
@@ -60,6 +60,7 @@ def main():
             # print("BBB", word, item, compare)
             reset = False
             add_document = False
+            print(compare, length)
             if word == tokens_for_query[compare]:
                 if compare == 0:
                     start = item
@@ -90,12 +91,12 @@ def main():
                 else:
                     results[document] += 1
 
-                if compare == 1 and word != tokens_for_query[0]:
+                if compare == 1 and (word != tokens_for_query[0] or length == 1):
                     # print("FFF", compare, length, item, words, word, tokens_for_query[0])
                     matches[document].append({'from': item, 'to': item, 'words': words})
                     results[document] += 1
                     reset = True
-                if compare == 1 and word == tokens_for_query[0]:
+                if compare == 1 and word != tokens_for_query[0] and length != 1:
                     start = item
                     reset = False
 
