@@ -78,6 +78,12 @@ def main():
         # TODO get snippet from document in 3 words + from : to + 3 words
         frequency = len(matches[document])
         print(document, frequency)
+        original_text_for_doc = get_text(document)
+        for match in matches[document]:
+            to = original_text_for_doc.find(' ', match['to'] + 1)
+            to = original_text_for_doc.find(' ', to + 1)
+            to = original_text_for_doc.find(' ', to + 1)
+            print(match, original_text_for_doc[match['from']:to], to)
 
     return
 
