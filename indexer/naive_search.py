@@ -11,6 +11,9 @@ from data_processor import get_postings
 query1 = "predelovalne dejavnosti"
 query2 = "trgovina"
 query3 = "social services"
+query4 = "okoljevarstveno dovoljenje"
+query5 = "stanovanjski objekt"
+query6 = "registracija samostojnega podjetnika"
 
 
 def main():
@@ -24,7 +27,7 @@ def main():
     slovene_stopwords = get_stopwords()
 
     # process the query
-    text_for_query = get_text(query3)
+    text_for_query = get_text(query4)
     all_tokens_for_query = nltk.word_tokenize(text_for_query)
 
     print("q1 text", text_for_query)
