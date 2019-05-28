@@ -11,6 +11,9 @@ from indexer.sqlite import create_connection, close_connection, select_sql
 query1 = "predelovalne dejavnosti"
 query2 = "trgovina"
 query3 = "social services"
+query4 = "okoljevarstveno dovoljenje"
+query5 = "stanovanjski objekt"
+query6 = "registracija samostojnega podjetnika"
 
 
 def main():
@@ -20,7 +23,7 @@ def main():
     conn = create_connection('../inverted-index.db')
 
     # process the query
-    text_for_query = get_text(query3)
+    text_for_query = get_text(query4)
     # print("q1 text", text_for_query)
 
     tokens_for_query = nltk.word_tokenize(text_for_query)
@@ -60,7 +63,7 @@ def main():
             # print("BBB", word, item, compare)
             reset = False
             add_document = False
-            print(compare, length)
+            # print(compare, length)
             if word == tokens_for_query[compare]:
                 if compare == 0:
                     start = item
@@ -163,7 +166,7 @@ def main():
         snippet = ""
         for match in matches[document]:
             index = match['from']
-            snippet += "..." \
+            snippet += "... " \
                       + all_tokens_for_doc[index - 3] + " " \
                       + all_tokens_for_doc[index - 2] + " " \
                       + all_tokens_for_doc[index - 1] + " "
