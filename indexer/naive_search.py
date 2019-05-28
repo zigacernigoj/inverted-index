@@ -1,5 +1,6 @@
 import re
 import nltk
+import time
 
 from data_processor import get_filepaths
 from data_processor import get_stopwords
@@ -13,6 +14,9 @@ query3 = "social services"
 
 
 def main():
+
+    import time
+    start = time.time()
 
     paths = get_filepaths()
 
@@ -51,6 +55,8 @@ def main():
 
             print(postings_for_doc[all_tokens_for_query[0]]["frequency"], "\t", filePath, "\t", snippet)
 
+    end = time.time()
+    print("Results found in", end - start)
 
 if __name__ == "__main__":
     main()
