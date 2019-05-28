@@ -97,7 +97,7 @@ def get_filepaths():
     filepath_list = []
 
     for root, dirs, files in os.walk(base_dir):
-        filepath_list.extend(os.path.join(root, x) for x in files if x.endswith(".html"))
+        filepath_list.extend(os.path.join(root, x).replace("\\", "/") for x in files if x.endswith(".html"))
 
     return filepath_list
 
@@ -116,7 +116,6 @@ def get_text(file_or_string):
         parsed = BeautifulSoup(BeautifulSoup(content, 'html.parser').prettify(), 'html.parser')
 
         # additional steps
-        # TODO: describe in report
         for s in parsed("script"):
             s.decompose()
         for s in parsed("noscript"):
@@ -164,7 +163,7 @@ def main():
 
     conn = create_connection('../inverted-index.db')
 
-    sql = 'CREATE TABLE IndexWord (  word TEXT PRIMARY KEY );'
+    sql = 'CREATE TABLE IF NOT EXISTS IndexWord (  word TEXT PRIMARY KEY );'
     sql2 = 'CREATE TABLE Posting (' \
            '  word TEXT NOT NULL,' \
            '  documentName TEXT NOT NULL,' \
@@ -194,6 +193,7 @@ def main():
     except Exception as e:
         print(e)
 
+    # postings
     for filePath in paths:
         try:
             print("getting postings for", filePath)
