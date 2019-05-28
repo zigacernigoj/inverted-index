@@ -10,7 +10,7 @@ import string
 
 import nltk
 
-from indexer.sqlite import create_connection, create_table, insert_sql, close_connection
+from indexer.sqlite import create_connection, create_table, insert_sql, bulk_insert_postings_sql, bulk_insert_words_sql, close_connection
 
 nltk.download('stopwords')
 nltk.download('punkt')
@@ -134,11 +134,11 @@ def get_text(file_or_string):
         raise Exception
 
 
+def get_only_words(tokens, slovene_stopwords):
+    return [token.lower() for token in tokens if token not in slovene_stopwords and token not in string.punctuation]
+
+
 def get_postings(tokens, slovene_stopwords):
-
-
-    # # remove stopwords
-    # tokens = [word for word in tokens if word not in slovene_stopwords and word not in string.punctuation]
 
     postings_for_doc = {}
 
@@ -177,12 +177,26 @@ def main():
     create_table(conn, sql)
     create_table(conn, sql2)
 
-    visited_words = {}
+    print("getting words")
+    unique_words = []
+    for filePath in paths:
+        original_text_for_doc = get_text(filePath)
+        all_tokens_for_doc = nltk.word_tokenize(original_text_for_doc)
+        words_for_doc = get_only_words(all_tokens_for_doc, slovene_stopwords)
+        print("got words for", filePath)
+        unique_words.extend(words_for_doc)
+
+    unique_words = set(unique_words)
+
+    print("inserting words")
+    try:
+        bulk_insert_words_sql(conn, unique_words)
+    except Exception as e:
+        print(e)
 
     for filePath in paths:
-
         try:
-            print(filePath)
+            print("getting postings for", filePath)
 
             # get base text
             original_text_for_doc = get_text(filePath)
@@ -190,53 +204,25 @@ def main():
             # get tokens - separated WORDS, STOPWORDS AND PUNCTUATION
             # DO THIS SAME PROCEDURE WHEN SEARCHING !!!
             all_tokens_for_doc = nltk.word_tokenize(original_text_for_doc)
-            print(all_tokens_for_doc)
+            # print(all_tokens_for_doc)
 
             postings_for_doc = get_postings(all_tokens_for_doc, slovene_stopwords)
 
-            print(filePath, postings_for_doc)
+            # print(filePath, postings_for_doc)
 
+            print("inserting postings")
+            postings_for_db = []
             for item in postings_for_doc:
-                if item not in visited_words:
-                    try:
-                        sql = 'INSERT INTO IndexWord(word) VALUES(?)'
-                        inserted1 = insert_sql(conn, sql, [item])
-                        visited_words[item] = inserted1
-                    except Exception as e:
-                        print(e)
-
-                sql = 'INSERT INTO Posting(word, documentName, frequency, indexes) VALUES(?,?,?,?)'
                 indexes = ','.join(str(e) for e in postings_for_doc[item]['indexes'])
-                inserted2 = insert_sql(conn, sql, (item, filePath, postings_for_doc[item]['frequency'], indexes))
-                # print(inserted1, inserted2, filePath, item, postings_for_doc[item])
+                postings_for_db.append([item, filePath, postings_for_doc[item]['frequency'], indexes])
 
-            # IMPORTANT VARIABLES:
-            # original_text_for_doc - preprocessed text from html file (no code!!!)
-            # postings_for_doc - postings to be added to DB
-
-            # postings_for_doc IS A DICTIONARY
-            # EXAMPLE ELEMENT: 'word': {'frequency': 1, 'indexes': [0]},
-            # keys are (unique) WORDS in a doc
-            # values are {'frequency': 1NUMBER, 'indexes': [array of indexes]},
-
-            # ADD TO DB
-            # add to DB table Word:
-            # KEY from postings_for_doc
-
-            # add to DB table Posting
-            #   word (KEY from postings_for_doc),
-            #   documentName (filePath),
-            #   frequency (from postings_for_doc),
-            #   indexes (from postings_for_doc -> TRANSFORM TO STRING!!!)
+            bulk_insert_postings_sql(conn, postings_for_db)
 
             # break
 
         except Exception as e:
             print("DOC:", filePath, e)
             # break
-
-    # tt = get_text("./PA3-data\e-prostor.gov.si\e-prostor.gov.si.125.html")
-    # print(tt)
 
     close_connection(conn)
 

@@ -1,0 +1,18 @@
+ # IMPORTANT VARIABLES:
+            # original_text_for_doc - preprocessed text from html file (no code!!!)
+            # postings_for_doc - postings to be added to DB
+
+            # postings_for_doc IS A DICTIONARY
+            # EXAMPLE ELEMENT: 'word': {'frequency': 1, 'indexes': [0]},
+            # keys are (unique) WORDS in a doc
+            # values are {'frequency': 1NUMBER, 'indexes': [array of indexes]},
+
+            # ADD TO DB
+            # add to DB table Word:
+            # KEY from postings_for_doc
+
+            # add to DB table Posting
+            #   word (KEY from postings_for_doc),
+            #   documentName (filePath),
+            #   frequency (from postings_for_doc),
+            #   indexes (from postings_for_doc -> TRANSFORM TO STRING!!!)
