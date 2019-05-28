@@ -134,37 +134,23 @@ def get_text(file_or_string):
         raise Exception
 
 
-# returns tokens from base text
-def get_tokens(text, slovene_stopwords):
-    # put all into lower case
-    text = text.lower()
-
-    # tokenize
-    tokens = nltk.word_tokenize(text)
-
-    # remove stopwords
-    tokens = [word for word in tokens if word not in slovene_stopwords and word not in string.punctuation]
-
-    return tokens
+def get_postings(tokens, slovene_stopwords):
 
 
-def get_postings(tokens, original_text):
-    unique_tokens = set(tokens)
+    # # remove stopwords
+    # tokens = [word for word in tokens if word not in slovene_stopwords and word not in string.punctuation]
 
     postings_for_doc = {}
 
-    for word in unique_tokens:
-        try:
-            indexes_of_occurrences = [m.start() for m in
-                                      re.finditer(re.escape(word), original_text, flags=re.IGNORECASE)]
-            occurrences = len(indexes_of_occurrences)
+    for index, token in enumerate(tokens):
+        token = token.lower()
 
-            # if occurrences > 0:  # dodaj ce bo nujno
-            postings_for_doc[word] = {"frequency": occurrences, "indexes": indexes_of_occurrences}
-
-        except Exception:
-            print("word", word)
-            raise Exception
+        if token not in slovene_stopwords and token not in string.punctuation:
+            if token in postings_for_doc:
+                postings_for_doc[token]["indexes"].append(index)
+                postings_for_doc[token]["frequency"] += 1
+            else:
+                postings_for_doc[token] = {"indexes": [index], "frequency": 1}
 
     return postings_for_doc
 
@@ -191,27 +177,31 @@ def main():
     create_table(conn, sql)
     create_table(conn, sql2)
 
-    wisited_words = {}
+    visited_words = {}
 
     for filePath in paths:
 
         try:
             print(filePath)
-            # get base text from which the results for queries will me retrieved
-            original_text_for_doc = get_text(filePath)  # THIS IS BASE TEXT FOR ALL FURTHER WORK
 
-            # get tokens - separated words
-            tokens_for_doc = get_tokens(original_text_for_doc, slovene_stopwords)
+            # get base text
+            original_text_for_doc = get_text(filePath)
 
-            postings_for_doc = get_postings(tokens_for_doc, original_text_for_doc)
+            # get tokens - separated WORDS, STOPWORDS AND PUNCTUATION
+            # DO THIS SAME PROCEDURE WHEN SEARCHING !!!
+            all_tokens_for_doc = nltk.word_tokenize(original_text_for_doc)
+            print(all_tokens_for_doc)
 
-            # print(filePath, postings_for_doc)
+            postings_for_doc = get_postings(all_tokens_for_doc, slovene_stopwords)
+
+            print(filePath, postings_for_doc)
+
             for item in postings_for_doc:
-                if item not in wisited_words:
+                if item not in visited_words:
                     try:
                         sql = 'INSERT INTO IndexWord(word) VALUES(?)'
                         inserted1 = insert_sql(conn, sql, [item])
-                        wisited_words[item] = inserted1
+                        visited_words[item] = inserted1
                     except Exception as e:
                         print(e)
 
