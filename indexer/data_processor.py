@@ -162,7 +162,7 @@ def main():
     # get stopwords only once
     slovene_stopwords = get_stopwords()
 
-    conn = create_connection('db.db')
+    conn = create_connection('../inverted-index.db')
 
     sql = 'CREATE TABLE IndexWord (  word TEXT PRIMARY KEY );'
     sql2 = 'CREATE TABLE Posting (' \
