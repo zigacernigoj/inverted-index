@@ -9,6 +9,9 @@ import re
 import string
 
 import nltk
+
+from indexer.sqlite import create_connection, create_table, insert_sql, close_connection
+
 nltk.download('stopwords')
 nltk.download('punkt')
 
@@ -102,8 +105,6 @@ def get_filepaths():
 # returns only a text from HTML document
 # RETURNS BASE TEXT FOR ALL FURTHER WORK
 def get_text(file_or_string):
-
-
     if isfile(file_or_string):
 
         # print(filepath)
@@ -154,7 +155,8 @@ def get_postings(tokens, original_text):
 
     for word in unique_tokens:
         try:
-            indexes_of_occurrences = [m.start() for m in re.finditer(re.escape(word), original_text, flags=re.IGNORECASE)]
+            indexes_of_occurrences = [m.start() for m in
+                                      re.finditer(re.escape(word), original_text, flags=re.IGNORECASE)]
             occurrences = len(indexes_of_occurrences)
 
             # if occurrences > 0:  # dodaj ce bo nujno
@@ -169,15 +171,32 @@ def get_postings(tokens, original_text):
 
 # just a demo, how to call functions above
 def main():
-
     paths = get_filepaths()
 
     # get stopwords only once
     slovene_stopwords = get_stopwords()
 
+    conn = create_connection('db.db')
+
+    sql = 'CREATE TABLE IndexWord (  word TEXT PRIMARY KEY );'
+    sql2 = 'CREATE TABLE Posting (' \
+           '  word TEXT NOT NULL,' \
+           '  documentName TEXT NOT NULL,' \
+           '  frequency INTEGER NOT NULL,' \
+           '  indexes TEXT NOT NULL,' \
+           '  PRIMARY KEY(word, documentName),' \
+           '  FOREIGN KEY (word) REFERENCES IndexWord(word)' \
+           ');'
+
+    create_table(conn, sql)
+    create_table(conn, sql2)
+
+    wisited_words = {}
+
     for filePath in paths:
 
         try:
+            print(filePath)
             # get base text from which the results for queries will me retrieved
             original_text_for_doc = get_text(filePath)  # THIS IS BASE TEXT FOR ALL FURTHER WORK
 
@@ -185,6 +204,21 @@ def main():
             tokens_for_doc = get_tokens(original_text_for_doc, slovene_stopwords)
 
             postings_for_doc = get_postings(tokens_for_doc, original_text_for_doc)
+
+            # print(filePath, postings_for_doc)
+            for item in postings_for_doc:
+                if item not in wisited_words:
+                    try:
+                        sql = 'INSERT INTO IndexWord(word) VALUES(?)'
+                        inserted1 = insert_sql(conn, sql, [item])
+                        wisited_words[item] = inserted1
+                    except Exception as e:
+                        print(e)
+
+                sql = 'INSERT INTO Posting(word, documentName, frequency, indexes) VALUES(?,?,?,?)'
+                indexes = ','.join(str(e) for e in postings_for_doc[item]['indexes'])
+                inserted2 = insert_sql(conn, sql, (item, filePath, postings_for_doc[item]['frequency'], indexes))
+                # print(inserted1, inserted2, filePath, item, postings_for_doc[item])
 
             # IMPORTANT VARIABLES:
             # original_text_for_doc - preprocessed text from html file (no code!!!)
@@ -205,11 +239,16 @@ def main():
             #   frequency (from postings_for_doc),
             #   indexes (from postings_for_doc -> TRANSFORM TO STRING!!!)
 
-        except Exception:
-            print("DOC:", filePath)
+            # break
+
+        except Exception as e:
+            print("DOC:", filePath, e)
+            # break
 
     # tt = get_text("./PA3-data\e-prostor.gov.si\e-prostor.gov.si.125.html")
     # print(tt)
+
+    close_connection(conn)
 
     pass
 
