@@ -1,5 +1,10 @@
 # Inverted index: building it and using it
 
+## About
+
+Simple implementation of inverted index with sqlite.
+Querying using inverted index and sequential file reading.
+
 ## Requirements
 
 ### Python
@@ -23,3 +28,12 @@ Note that you must then install needed libraries with `pipenv` not `pip`.
 - BeautifulSoup4: run `pip install bs4`
 - NLTK: run `pip install nltk`
 
+## Running
+
+- first run `python ./indexer/data_processor.py` to build the database for inverted index 
+- then run `python ./indexer/index_search.py` to search with the inverted index
+- then run `python ./indexer/naive_search.py` to search with sequential file reading
+
+There are no parameters for selecting what to search.
+The predefined search strings are defined in already mentioned files ending with `search.py`.
+Go in the files and change the variable in line `text_for_query = get_text(queryX)`.
