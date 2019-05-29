@@ -4,6 +4,7 @@
 
 Simple implementation of inverted index with sqlite.
 Querying using inverted index and sequential file reading.
+Report in the usual place. 
 
 ## Requirements
 
